@@ -1,0 +1,9 @@
+{
+  "name": "ナンバー抽選",
+  "short_name": "抽選",
+  "start_url": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#000000",
+  "theme_color": "#000000"
+}

@@ -1,0 +1,276 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+:root {
+  --ink: #2b2725;      /* ロゴの黒 */
+  --green: #2f7d3b;
+  --yellow: #e2b22d;
+  --red: #c8302c;
+  /* ロゴの大きさ（画面の高さ80%、ただし横幅の45%まで） */
+  --logo-h: min(80vh, 45vw);
+  --logo-w: calc(var(--logo-h) * 0.819);
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  color: var(--ink);
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", system-ui, sans-serif;
+  touch-action: manipulation;
+}
+
+/* ===== 背景（コンクリート） =====
+   images/background.jpg を差し替えると背景が変わります */
+body {
+  background: #dcdcda url("images/background.jpg") center / cover no-repeat;
+}
+
+/* ===== ステージ ===== */
+#stage {
+  position: fixed;
+  inset: 0;
+  cursor: pointer;
+}
+
+/* 左：ロゴ */
+#logo {
+  position: absolute;
+  left: max(3vw, env(safe-area-inset-left));
+  top: 50%;
+  height: var(--logo-h);
+  width: var(--logo-w);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* 右：数字エリア */
+#panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(max(3vw, env(safe-area-inset-left)) + var(--logo-w) + 2vw);
+  right: env(safe-area-inset-right);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#message {
+  position: absolute;
+  top: max(4vh, env(safe-area-inset-top));
+  margin-top: 7vh;
+  font-size: clamp(14px, 4.2vh, 34px);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+/* 数字のフォント：Anton（Google Fonts）。読み込めない場合は太いゴシックで表示 */
+#number, #history li {
+  font-family: "Anton", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+}
+
+#number {
+  font-size: 60vh;
+  line-height: 1;
+  color: var(--ink);
+  text-shadow: 0 0.6vh 0 rgba(0,0,0,0.12);
+  transform: translateY(1vh);
+}
+
+#number.rolling {
+  animation: shake 0.1s infinite;
+}
+
+#number.decided,
+#number.decided-static {
+  color: var(--red);
+}
+
+#number.decided {
+  animation: pop 0.6s cubic-bezier(.2,1.6,.4,1);
+}
+
+#number.idle {
+  opacity: 0.35;
+}
+
+@keyframes shake {
+  0%   { transform: translate(-0.4vh, 1vh); }
+  50%  { transform: translate(0.4vh, 0.6vh); }
+  100% { transform: translate(-0.4vh, 1vh); }
+}
+
+@keyframes pop {
+  0%   { transform: translateY(1vh) scale(0.4); }
+  60%  { transform: translateY(1vh) scale(1.15); }
+  100% { transform: translateY(1vh) scale(1); }
+}
+
+/* フラッシュ演出 */
+.flash::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 70% 50%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 65%);
+  animation: flash 0.5s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes flash {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* ===== 履歴（出た順） ===== */
+#history {
+  position: absolute;
+  bottom: max(4vh, env(safe-area-inset-bottom));
+  display: flex;
+  gap: 1vw;
+  list-style: none;
+}
+
+#history li {
+  --size: min(9vh, 4.5vw);
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--size) * 0.58);
+  border: 0.35vh dashed rgba(43,39,37,0.35);
+  color: transparent;
+}
+
+#history li.filled {
+  background: var(--ink);
+  border: none;
+  color: #f2f1ee;
+}
+
+#history li.current {
+  background: var(--red);
+}
+
+#history li.latest {
+  animation: pop 0.5s cubic-bezier(.2,1.6,.4,1);
+}
+
+
+/* ===== 操作ボタン ===== */
+.controls {
+  position: fixed;
+  top: max(2vh, env(safe-area-inset-top));
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+#controls { right: max(2vw, env(safe-area-inset-right)); }
+
+.controls button {
+  font: inherit;
+  font-size: clamp(11px, 2.6vh, 16px);
+  font-weight: 700;
+  color: #fff;
+  background: rgba(43,39,37,0.85);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 999px;
+  padding: 0.6em 1em;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.controls button:active {
+  background: var(--red);
+}
+
+.controls button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* 一定時間操作が無いとボタンを薄くする（本番中に目立たないように） */
+body.controls-dim .controls {
+  opacity: 0.25;
+  transition: opacity 0.6s;
+}
+
+/* ===== 確認ダイアログ ===== */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.6);
+}
+.modal[hidden] { display: none; }
+
+.modal-box {
+  background: #fff;
+  color: #222;
+  border-radius: 16px;
+  padding: 28px 32px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+  max-width: 90vw;
+}
+.modal-box small {
+  font-size: 14px;
+  font-weight: 400;
+  color: #666;
+}
+.modal-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 20px;
+}
+.modal-actions button {
+  font: inherit;
+  font-size: 18px;
+  padding: 10px 24px;
+  border-radius: 999px;
+  border: 1px solid #ccc;
+  background: #f2f2f2;
+  cursor: pointer;
+}
+.modal-actions button.danger {
+  background: #e5484d;
+  border-color: #e5484d;
+  color: #fff;
+}
+
+/* ===== 縦画面の案内 ===== */
+#rotate {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: #111;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  font-size: 20px;
+  font-weight: 700;
+}
+.rotate-icon { font-size: 64px; }
+
+@media (orientation: portrait) and (max-width: 1024px) {
+  #rotate { display: flex; }
+}
